@@ -32,6 +32,8 @@ class Pass1Out{
 }
 
 public class XEPass1 {
+	
+	private static HashMap<Integer, XELiteral> literalPool;
 
 	public XEPass1() {
 		
@@ -43,6 +45,8 @@ public class XEPass1 {
 		
 		int locctr 	= 0;
 		int section = 0;
+		
+		literalPool = new HashMap<Integer,XELiteral>();
 		
 		for(String line : in.lines){
 			
@@ -58,7 +62,7 @@ public class XEPass1 {
 			//// addr 설정 																////
 			//// 심볼테이블 만들기 														////
 			
-			// New symbol found
+			/* New symbol found */
 			if ( token.label.compareTo("") != 0 && in.opTable.containsKey(token.label) == false ){
 				
 				XESymbol sym = new XESymbol();
@@ -69,7 +73,7 @@ public class XEPass1 {
 				out.symbolTables.get(section).put(token.label, sym);
 			}
 			
-			// OPERATOR
+			/* OPERATOR */
 			{
 				int type = 0;
 				
@@ -84,8 +88,9 @@ public class XEPass1 {
 				locctr += type;
 			}
 			
-			// DIRECTIVE
+			/* DIRECTIVE */
 			switch(token.operator){
+			
 			case "WORD":	
 				locctr += 1;
 				break;
@@ -107,6 +112,10 @@ public class XEPass1 {
 				}
 				break;
 				
+			case "LTORG":
+				
+				break;
+				
 			case "CSECT":
 				
 				locctr = 0;
@@ -119,10 +128,23 @@ public class XEPass1 {
 				System.out.println("");
 				break;
 			}
+			
+			/* Gathering Literals */
+			for(int i = 0; i < token.operands.length; i++){
+				if(token.operands[i].compareTo("") != 0 && token.operands[i].charAt(0) == '='){
+					
+					XELiteral ltr = new XELiteral(token.operands[i]);
+					addLiteral(ltr);
+					
+					System.out.println("[literal] " + ltr.getLtrStr() + " added. " + literalPool.size());
+				}
+			}
 
 			out.tokens.add(token);
 			System.out.println("[" + String.format("%04X", token.addr) + "] "+token.label + " " + token.operator + " ");
 		}
+		
+		literalPool = null;
 		
 		return out;
 	}
@@ -154,6 +176,13 @@ public class XEPass1 {
 		}
 		
 		return null;
+	}
+	
+	private static void addLiteral(XELiteral literal){
+		
+		if(literalPool.containsKey(literal.getValue()) == false){
+			literalPool.put(literal.getValue(), literal);
+		}
 	}
 
 }
