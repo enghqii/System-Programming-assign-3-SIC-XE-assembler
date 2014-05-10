@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +31,7 @@ public class XEAssembler implements XEToyAssemler1 {
 		// TODO parseData는 input 파일에 저장된 명령 라인을 object 코드로 전환하는 과정 수행 // 패스1, 패스2 실행해야함.
 		
 		Pass1In in = new Pass1In();
+		in.opTable = opTable;
 		
 		try {
 			BufferedReader inputReader = new BufferedReader(new FileReader(input));
