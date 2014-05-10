@@ -3,7 +3,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +29,7 @@ public class XEAssembler implements XEToyAssemler1 {
 		
 		// TODO parseData는 input 파일에 저장된 명령 라인을 object 코드로 전환하는 과정 수행 // 패스1, 패스2 실행해야함.
 		
+		// 0. READ LINES
 		Pass1In p1In = new Pass1In();
 		p1In.opTable = opTable;
 		
@@ -50,8 +50,10 @@ public class XEAssembler implements XEToyAssemler1 {
 			e.printStackTrace();
 		}
 		
+		// 1. DO PASS1
 		Pass1Out p1Out = XEPass1.Pass1(p1In);
 		
+		// 1.1 print them out
 		for(XEToken token : p1Out.tokens){
 			
 			String operands = "";
@@ -61,8 +63,11 @@ public class XEAssembler implements XEToyAssemler1 {
 					operands += (token.operands[i] + " ");
 			}
 			
-			System.out.println("[" + String.format("%04X", token.addr) + "] "+token.label + " " + token.operator + " " + operands);
+			System.out.println("[" + String.format("%04X", token.addr) + "]\t"+token.label + "\t" + token.operator + "\t" + operands);
 		}
+		
+		// 2. DO PASS2
+		Pass2Out p2Out = XEPass2.Pass2(p1Out);
 	}
 
 	@Override
