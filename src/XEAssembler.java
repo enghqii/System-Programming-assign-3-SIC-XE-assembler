@@ -12,6 +12,10 @@ import sp.interfacepack.XEToyAssemler1;
 public class XEAssembler implements XEToyAssemler1 {
 	
 	private Map<String,XEOperator> opTable = null;
+	
+	private Pass1In 	p1In 	= null;
+	private Pass1Out 	p1Out 	= null;
+	private Pass2Out 	p2Out 	= null;
 
 	public XEAssembler() {
 		
@@ -30,7 +34,7 @@ public class XEAssembler implements XEToyAssemler1 {
 		// TODO parseData는 input 파일에 저장된 명령 라인을 object 코드로 전환하는 과정 수행 // 패스1, 패스2 실행해야함.
 		
 		// 0. READ LINES
-		Pass1In p1In = new Pass1In();
+		p1In = new Pass1In();
 		p1In.opTable = opTable;
 		
 		try {
@@ -51,7 +55,7 @@ public class XEAssembler implements XEToyAssemler1 {
 		}
 		
 		// 1. DO PASS1
-		Pass1Out p1Out = XEPass1.Pass1(p1In);
+		p1Out = XEPass1.Pass1(p1In);
 		
 		// 1.1 print them out
 		for(XEToken token : p1Out.tokens){
@@ -67,12 +71,13 @@ public class XEAssembler implements XEToyAssemler1 {
 		}
 		
 		// 2. DO PASS2
-		Pass2Out p2Out = XEPass2.Pass2(p1Out);
+		p2Out = XEPass2.Pass2(p1Out);
 	}
 
 	@Override
 	public void printOPCODE() {
 		// TODO printOPCODE는 콘솔창 출력 및 출력 파일 생성 등의 작업을 수행하시면 됩니다.
+		// with Pass2Out
 	}
 	
 	private void initInstructionFile(String fileName) {
