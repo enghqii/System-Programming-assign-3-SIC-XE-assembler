@@ -1,8 +1,9 @@
 
 public class XELiteral {
 
-	private String 	ltrStr = "";
-	private int 	value = 0;
+	private String 	ltrStr 	= "";
+	private int 	value 	= 0;
+	private int		size 	= 0;
 	
 	public XELiteral(String ltrStr) {
 		
@@ -19,12 +20,16 @@ public class XELiteral {
 				value |= c;
 			}
 			
+			size = ltrStr.length() - 4;
+			
 			break;
 			
 		case 'X':
 			
 			String hexStr = ltrStr.substring(3, ltrStr.length() - 1);
 			value = Integer.parseInt(hexStr);
+			
+			size = (ltrStr.length() - 4)/2;
 			
 			break;
 		}
@@ -36,6 +41,10 @@ public class XELiteral {
 	
 	public String getLtrStr(){
 		return this.ltrStr;
+	}
+	
+	public int getSize(){
+		return this.size;
 	}
 
 }

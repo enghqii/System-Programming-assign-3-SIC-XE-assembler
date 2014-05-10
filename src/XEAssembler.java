@@ -30,8 +30,8 @@ public class XEAssembler implements XEToyAssemler1 {
 		
 		// TODO parseData는 input 파일에 저장된 명령 라인을 object 코드로 전환하는 과정 수행 // 패스1, 패스2 실행해야함.
 		
-		Pass1In in = new Pass1In();
-		in.opTable = opTable;
+		Pass1In p1In = new Pass1In();
+		p1In.opTable = opTable;
 		
 		try {
 			BufferedReader inputReader = new BufferedReader(new FileReader(input));
@@ -39,7 +39,7 @@ public class XEAssembler implements XEToyAssemler1 {
 			while(true) {
 				String line = inputReader.readLine();
 				if(line == null) break;
-				in.lines.add(line);
+				p1In.lines.add(line);
 			}
 			
 			inputReader.close();
@@ -50,7 +50,19 @@ public class XEAssembler implements XEToyAssemler1 {
 			e.printStackTrace();
 		}
 		
-		XEPass1.Pass1(in);
+		Pass1Out p1Out = XEPass1.Pass1(p1In);
+		
+		for(XEToken token : p1Out.tokens){
+			
+			String operands = "";
+			
+			for(int i=0;i<token.operands.length;i++){
+				if(token.operands[i].compareTo("") != 0)
+					operands += (token.operands[i] + " ");
+			}
+			
+			System.out.println("[" + String.format("%04X", token.addr) + "] "+token.label + " " + token.operator + " " + operands);
+		}
 	}
 
 	@Override

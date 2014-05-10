@@ -48,7 +48,8 @@ public class XEPass1 {
 		
 		literalPool = new HashMap<Integer,XELiteral>();
 		
-		for(String line : in.lines){
+		for(int i=0; i < in.lines.size(); i++){
+			String line = in.lines.get(i);
 			
 			XEToken token = ParseLine(line);
 			
@@ -112,9 +113,25 @@ public class XEPass1 {
 				}
 				break;
 				
+			case "END":
 			case "LTORG":
 				
-				break;
+				for(int val : literalPool.keySet()){
+					
+					XELiteral 	literal 	= literalPool.get(val);
+					XEToken 	ltrToken 	= new XEToken();
+					
+					ltrToken.addr 	= locctr;
+					ltrToken.label 	= "*";
+					ltrToken.operands[0] = literal.getLtrStr();
+					
+					out.tokens.add(ltrToken);
+					
+					locctr += literal.getSize();
+				}
+				literalPool.clear();
+				continue;
+				//break;
 				
 			case "CSECT":
 				
@@ -124,24 +141,22 @@ public class XEPass1 {
 				// prepare one more symbol table.
 				out.symbolTables.add(new HashMap<String, XESymbol>());
 				
-				// and.. one more
-				System.out.println("");
 				break;
 			}
 			
 			/* Gathering Literals */
-			for(int i = 0; i < token.operands.length; i++){
-				if(token.operands[i].compareTo("") != 0 && token.operands[i].charAt(0) == '='){
+			for(int j = 0; j < token.operands.length; j++){
+				if(token.operands[j].compareTo("") != 0 && token.operands[j].charAt(0) == '='){
 					
-					XELiteral ltr = new XELiteral(token.operands[i]);
+					XELiteral ltr = new XELiteral(token.operands[j]);
 					addLiteral(ltr);
 					
-					System.out.println("[literal] " + ltr.getLtrStr() + " added. " + literalPool.size());
+					//System.out.println("[literal] " + ltr.getLtrStr() + " added. " + literalPool.size());
 				}
 			}
 
 			out.tokens.add(token);
-			System.out.println("[" + String.format("%04X", token.addr) + "] "+token.label + " " + token.operator + " ");
+			//System.out.println("[" + String.format("%04X", token.addr) + "] "+token.label + " " + token.operator + " ");
 		}
 		
 		literalPool = null;
