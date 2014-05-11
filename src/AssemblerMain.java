@@ -14,7 +14,7 @@ public class AssemblerMain {
 		
 		assembler.initialize();		
 		assembler.parseData(input);
-		
+		assembler.printOPCODE();
 	}
 
 }

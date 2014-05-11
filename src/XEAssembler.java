@@ -1,7 +1,9 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +55,7 @@ public class XEAssembler implements XEToyAssemler1 {
 		
 		// 1. DO PASS1
 		p1Out = XEPass1.Pass1(p1In);
-		
+
 		// 2. DO PASS2
 		p2Out = XEPass2.Pass2(p1Out);
 	}
@@ -62,12 +64,64 @@ public class XEAssembler implements XEToyAssemler1 {
 	public void printOPCODE() {
 		// TODO printOPCODE는 콘솔창 출력 및 출력 파일 생성 등의 작업을 수행하시면 됩니다.
 		// with Pass2Out
-	}
-	
-	private void initInstructionFile(String fileName) {
-		
+
 		try {
+			BufferedWriter out = new BufferedWriter(
+					new FileWriter("output.txt"));
+
+			boolean _1st = true;
+
+			for (XEControlSection section : p2Out.secitons) {
+
+				out.write(section.hRecord);
+				out.newLine();
+
+				if ("D".compareTo(section.dRecord) != 0) {
+					out.write(section.dRecord);
+					out.newLine();
+				}
+				if ("R".compareTo(section.rRecord) != 0) {
+					out.write(section.rRecord);
+					out.newLine();
+				}
+
+				for (String txt : section.tRecord) {
+
+					out.write(txt);
+					out.newLine();
+				}
+
+				for (XEModification modif : section.modifications) {
+					out.write(modif.getModificationRecord());
+					out.newLine();
+				}
+
+				if (_1st) {
+					out.write(String.format("E%06x\n",
+							section.startAddr));
+					out.newLine();
+				} else {
+					out.write("E\n");
+					out.newLine();
+				}
+
+				_1st = false;
+
+			}
 			
+			out.close();
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
+	private void initInstructionFile(String fileName) {
+
+		try {
+
 			opTable = new HashMap<String, XEOperator>();
 			
 			File inst = new File(fileName);

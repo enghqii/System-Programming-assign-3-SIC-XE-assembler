@@ -11,11 +11,11 @@ public class XEControlSection {
 	public String 	hRecord = "H"; 				// append here
 	
 	// R,D
-	public String 	externalReference 	= "R"; 	// append here
-	public String 	externalDefinition 	= "D"; 	// append here
+	public String 	rRecord 	= "R"; 	// append here
+	public String 	dRecord 	= "D"; 	// append here
 	
 	// T
-	public ArrayList<String> 			textRecord = null;
+	public ArrayList<String> 			tRecord = null;
 	
 	// M
 	public ArrayList<XEModification> 	modifications = null;
@@ -23,7 +23,7 @@ public class XEControlSection {
 
 	public XEControlSection() {
 		
-		textRecord 		= new ArrayList<String>(1);
+		tRecord 		= new ArrayList<String>(1);
 		modifications 	= new ArrayList<XEModification>(1);
 		
 	}

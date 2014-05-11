@@ -39,38 +39,27 @@ public class XEPass2 {
 		section = 0;
 		
 		curSection = null;
+		
+		int startAddr = 0;
 		String txtRecord = "";
 		
 		for( int idx = 0; idx < in.tokens.size(); idx++ ){
 			XEToken token = in.tokens.get(idx);
 
-			// print
-			{
-				String operands = "";
 
-				for(int i=0;i<token.operands.length;i++){
-					if(token.operands[i].compareTo("") != 0)
-						operands += (token.operands[i] + " ");
-				}
-
-				System.out.print("[" + String.format("%04X", token.addr)
-						+ "]\t" + token.label + "\t" + token.operator + "\t"
-						+ operands);
-			}
-			
 			// 1. 格利内靛 积己凳?
 			String objCode = generateObjectCode(token);
 
 			if (objCode != null) {
 				// generated
-
-				System.out.print(""+String.format("\t%s",objCode));
 				
 				if(txtRecord.length() + objCode.length() <= 0x1D * 2){
 					txtRecord += objCode;
 				}else{
-					curSection.textRecord.add(txtRecord);
+					txtRecord = String.format("T%06X%02X%s", startAddr, txtRecord.length()/2, txtRecord);
+					curSection.tRecord.add(txtRecord);
 					txtRecord = objCode;
+					startAddr = token.addr;
 				}
 			}
 
@@ -80,6 +69,7 @@ public class XEPass2 {
 				curSection = new XEControlSection();
 				curSection.name 	= token.label;
 				curSection.startAddr = Integer.parseInt(token.operands[0]);
+				startAddr = 0;
 
 				break;
 
@@ -91,8 +81,8 @@ public class XEPass2 {
 						extdef.add(token.operands[i]);
 
 						int addr = in.symbolTables.get(section).get(token.operands[i]).addr;
-						curSection.externalDefinition += String.format("%-6s",token.operands[i]);
-						curSection.externalDefinition += String.format("%06X", addr);
+						curSection.dRecord += String.format("%-6s",token.operands[i]);
+						curSection.dRecord += String.format("%06X", addr);
 					}
 				}
 
@@ -103,7 +93,7 @@ public class XEPass2 {
 
 					if (token.operands[i].compareTo("") != 0) {
 						extref.add(token.operands[i]);
-						curSection.externalReference += String.format("%-6s",token.operands[i]);
+						curSection.rRecord += String.format("%-6s",token.operands[i]);
 					}
 				}
 				
@@ -112,10 +102,12 @@ public class XEPass2 {
 			case "CSECT":
 
 				// ends up current section
-				if(txtRecord != null){
-					curSection.textRecord.add(txtRecord);
+				if(txtRecord != null && txtRecord.length() > 0){
+					txtRecord = String.format("T%06X%02X%s", startAddr, txtRecord.length()/2, txtRecord);
+					curSection.tRecord.add(txtRecord);
 					txtRecord = "";
 				}
+				startAddr = 0;
 				
 				curSection.sectionSize = in.tokens.get(idx-1).addr + in.tokens.get(idx-1).size;
 				curSection.hRecord += String.format("%-6s%06X%06X",
@@ -131,34 +123,68 @@ public class XEPass2 {
 
 				section++;
 				break;
-				
+
+			case "RESW":
 			case "RESB":
 				
 				// force line feed another text record
-				curSection.textRecord.add(txtRecord);
-				txtRecord = "";
-				
-				break;
-				
-			case "RESW":
-				
-				// force line feed another text record
-				curSection.textRecord.add(txtRecord);
-				txtRecord = "";
+				if(txtRecord.length() > 0){
+					if(objCode != null){
+						// don't write
+					} else {
+						txtRecord = String.format("T%06X%02X%s", startAddr,
+								txtRecord.length() / 2, txtRecord);
+						curSection.tRecord.add(txtRecord);
+						txtRecord = "";
+					}
+				}
+				startAddr = in.tokens.get(idx+1).addr;
 				
 				break;
 				
 			case "EQU":
 				
+				if(token.operands[0].compareTo("*")  == 0){
+					break;
+				}
+
+				int val = 0;
+				
+				for (int i = 0; i < token.operands[0].length(); i++) {
+					if (token.operands[0].charAt(i) == '+'
+							|| token.operands[0].charAt(i) == '-') {
+						// expression;
+						
+						int accSize = -1;
+						
+						StringTokenizer stk = new StringTokenizer(token.operands[0], "+-");
+						while(stk.hasMoreTokens()){
+							String str = stk.nextToken();
+
+							if(accSize <= 0 || token.operands[0].charAt(accSize) == '+')
+								val += in.symbolTables.get(section).get(str).addr;
+							else if(token.operands[0].charAt(accSize) == '-')
+								val -= in.symbolTables.get(section).get(str).addr;
+							
+							accSize += str.length()+1;
+						}
+						
+					}
+				}
+				
+				token.addr = val;
+
 				break;
 			}
-			
+
 			// 3. END
 			if(idx ==  in.tokens.size() - 1 ){
 				// ends up current section
-				if (txtRecord != null) {
-					curSection.textRecord.add(txtRecord);
+				if(txtRecord != null || txtRecord.compareTo("") != 0){
+					txtRecord = String.format("T%06X%02X%s", startAddr, txtRecord.length()/2, txtRecord);
+					curSection.tRecord.add(txtRecord);
 					txtRecord = "";
+					startAddr = token.addr;
 				}
 				
 				XEToken tkn = in.tokens.get(idx);
@@ -170,8 +196,25 @@ public class XEPass2 {
 
 				out.secitons.add(curSection);
 			}
+			
+			
+			// print
+			{
+				String operands = "";
 
-			System.out.println("");
+				for(int i=0;i<token.operands.length;i++){
+					if(token.operands[i].compareTo("") != 0)
+						operands += (token.operands[i] + " ");
+				}
+
+				System.out.print("[" + String.format("%04X", token.addr)
+						+ "]\t" + token.label + "\t" + token.operator + "\t"
+						+ operands);
+				if (objCode != null) {
+					System.out.print(""+String.format("\t%s",objCode));
+				}
+				System.out.println("");
+			}
 		}
 
 		extdef = null;
@@ -362,7 +405,7 @@ public class XEPass2 {
 							modif.offset = 6;
 							char c = accSize<=0?'+':token.operands[0].charAt(accSize - 1);
 							modif.operation = c+str;
-							accSize = str.length() + 1;
+							accSize += str.length() + 1;
 							
 							curSection.modifications.add(modif);
 						}
