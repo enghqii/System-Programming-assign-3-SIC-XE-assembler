@@ -2,8 +2,12 @@
 public class XELiteral {
 
 	private String 	ltrStr 	= "";
+	
 	private int 	value 	= 0;
 	private int		size 	= 0;
+	
+	public int		addr	= 0;
+	public int		section = 0;
 	
 	public XELiteral(String ltrStr) {
 		
