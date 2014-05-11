@@ -70,6 +70,8 @@ public class XEAssembler implements XEToyAssemler1 {
 			System.out.println("[" + String.format("%04X", token.addr) + "]\t"+token.label + "\t" + token.operator + "\t" + operands);
 		}
 		
+		System.out.println("======================================================");
+		
 		// 2. DO PASS2
 		p2Out = XEPass2.Pass2(p1Out);
 	}

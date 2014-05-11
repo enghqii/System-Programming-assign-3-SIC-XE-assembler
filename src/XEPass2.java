@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 
 class Pass2Out {
 
@@ -11,58 +12,87 @@ public class XEPass2 {
 	private static ArrayList<String> extdef = null;
 	private static ArrayList<String> extref = null;
 	
+	private static HashMap<String, Integer> registers;
+	
 	private static int section = 0;
 
 	public XEPass2() {
-		// TODO Auto-generated constructor stub
+		
 	}
 
 	public static Pass2Out Pass2(Pass1Out _in){
 		
 		in = _in;
 		Pass2Out out = null;
+		
+		registers = new HashMap<String, Integer>();
+		registers.put("A", 0); registers.put("X", 1); registers.put("L", 2);
+		registers.put("B", 3); registers.put("S", 4); registers.put("T", 5);
+		registers.put("F", 6);
 
 		extdef = new ArrayList<String>();
 		extref = new ArrayList<String>();
-		
+
 		section = 0;
 
-		for(XEToken token : in.tokens){
+		for (XEToken token : in.tokens) {
 
+			{
+				String operands = "";
+
+				for(int i=0;i<token.operands.length;i++){
+					if(token.operands[i].compareTo("") != 0)
+						operands += (token.operands[i] + " ");
+				}
+
+				System.out.print("[" + String.format("%04X", token.addr) + "]\t"+token.label + "\t" + token.operator + "\t" + operands);
+			}
+			
 			// 1. 格利内靛 积己凳?
 			int objCode = generateObjectCode(token);
 
-			if(objCode != -1){
+			if (objCode != -1) {
 				// generated
+				
+				System.out.println(""+String.format("\t%X",objCode));
 			}
 
 			// 2. 叼泛萍宏甸 贸府
-			switch(token.operator){
-			case "EXTDEF" :
+			switch (token.operator) {
+			case "EXTDEF":
 				extdef.add(token.operands[0]);
 				break;
-			case "EXTREF" :
+			case "EXTREF":
 				extref.add(token.operands[0]);
 				break;
-			case "CSECT" :
+			case "CSECT":
+				section++;
 				break;
-			case "RESB" :
+			case "RESB":
 				break;
-			case "RESW" : 
+			case "RESW":
+				break;
+			case "EQU":
 				break;
 			}
+
+			System.out.println("");
 		}
+
+		extdef = null;
+		extref = null;
+		registers = null;
 
 		return out;
 	}
 
 	private static int generateObjectCode(XEToken token) {
-		
+
 		/* LITERAL? */{
 
 			if ("*".compareTo(token.label) == 0) {
 				XELiteral literal = new XELiteral(token.operands[0]);
-				
+
 				int objCode = literal.getValue();
 				return objCode;
 			}
@@ -101,7 +131,7 @@ public class XEPass2 {
 				} else if (token.operands[0].compareTo("") != 0
 						&& token.operands[0].charAt(0) == '#') {
 
-					objCode |= 0x0002;
+					objCode |= 0x0001;
 					immediate = true;
 
 					token.operands[0] = token.operands[0].substring(1); // cut
@@ -111,21 +141,22 @@ public class XEPass2 {
 
 					objCode |= 0x0003;
 				}
-				
+
 				objCode <<= 4;
 
 				// XBPE
 				int xbpe = 0;
 
 				// X
-				if (token.operands[0].compareTo("") != 0
-						&& token.operands[0].compareTo("X") == 0) {
+				if (token.operands[1].compareTo("") != 0
+						&& token.operands[1].compareTo("X") == 0) {
 					xbpe |= 1 << 3;
 				}
 				// P
 				if (type != 4
 						&& !immediate
-						&& (in.symbolTables.get(section).containsKey(token.operands[0])
+						&& token.operands[0].compareTo("") != 0
+						&& (in.symbolTables.get(section).containsKey(token.operands[0]) 
 								|| token.operands[0].charAt(0) == '=')) {
 					xbpe |= 1 << 1;
 				}
@@ -133,11 +164,11 @@ public class XEPass2 {
 				if (type == 4) {
 					xbpe |= 1 << 0;
 				}
-				
+
 				objCode |= xbpe;
-				
+
 				objCode <<= (type == 3 ? 12 : 20);
-				
+
 				/* disp */
 				int disp = 0;
 
@@ -152,9 +183,8 @@ public class XEPass2 {
 
 						// symbol
 
-						int addr = in.symbolTables.get(section).get(
-								token.operands[0]).addr;
-						disp = addr - token.addr;
+						int addr = in.symbolTables.get(section).get(token.operands[0]).addr;
+						disp = addr - (token.addr + type);
 
 					} else if (extref.contains(token.operands[0])) {
 
@@ -168,17 +198,38 @@ public class XEPass2 {
 
 						XELiteral l = new XELiteral(token.operands[0]);
 						XELiteral literal = in.literalTable.get(l.getValue());
-						disp = literal.addr - token.addr;
+						disp = literal.addr - (token.addr + type);
 					}
 				}
-				
-				objCode |= disp;
+
+				if(type == 3)
+					objCode |= (0x00FFF & disp);
+				else if (type == 4)
+					objCode |= (0xFFFFF & disp);
 
 				return objCode;
 
 			} else if (type == 2 || type == 1) {
 
 				int objCode = in.opTable.get(token.operator).opcode;
+
+				if (type == 2) {
+
+					objCode <<= 8;
+					
+					if(token.operands[0].compareTo("") != 0){
+						int r1 = registers.get(token.operands[0]);
+						r1 <<= 4;
+						objCode |= r1;
+					}
+					if(token.operands[1].compareTo("") != 0){
+						int r2 = registers.get(token.operands[1]);
+						objCode |= r2;
+					}
+
+				} else {
+
+				}
 
 				return objCode;
 			}
@@ -209,12 +260,12 @@ public class XEPass2 {
 
 	private static int parseConst(String str) {
 
-		switch (str.charAt(1)) {
+		switch (str.charAt(0)) {
 
 		case 'C': {
 			int value = 0;
 
-			for (int i = 3; i < str.length() - 1; i++) {
+			for (int i = 2; i < str.length() - 1; i++) {
 				char c = str.charAt(i);
 				value <<= 8;
 				value |= c;
@@ -226,13 +277,13 @@ public class XEPass2 {
 
 			int value = 0;
 
-			String hexStr = str.substring(3, str.length() - 1);
-			value = Integer.parseInt(hexStr);
+			String hexStr = str.substring(2, str.length() - 1);
+			value = Integer.parseInt(hexStr,16);
 
 			return value;
 		}
 		}
-		
+
 		return -1;
 	}
 }

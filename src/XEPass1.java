@@ -56,8 +56,8 @@ public class XEPass1 {
 
 		for (int i = 0; i < in.lines.size(); i++) {
 			String line = in.lines.get(i);
-
 			XEToken token = ParseLine(line);
+			int incAmt = 0;
 
 			if (token == null) {
 				continue;
@@ -69,17 +69,7 @@ public class XEPass1 {
 			// // addr 설정 ////
 			// // 심볼테이블 만들기 ////
 
-			/* New symbol found */
-			if (token.label.compareTo("") != 0
-					&& in.opTable.containsKey(token.label) == false) {
-
-				XESymbol sym = new XESymbol();
-				sym.name = token.label;
-				sym.addr = locctr;
-
-				//
-				out.symbolTables.get(section).put(token.label, sym);
-			}
+			
 
 			/* OPERATOR */
 			{
@@ -93,28 +83,28 @@ public class XEPass1 {
 					// retrive op-type
 					type = in.opTable.get(token.operator).type;
 				}
-				locctr += type;
+				incAmt += type;
 			}
 
 			/* DIRECTIVE */
 			switch (token.operator) {
 
 			case "WORD":
-				locctr += 1;
+				incAmt += 3;
 				break;
 
 			case "BYTE":
-				locctr += 3;
+				incAmt += 1;
 				break;
 
 			case "RESW": {
 				int size = Integer.parseInt(token.operands[0]);
-				locctr += (size * 3);
+				incAmt += (size * 3);
 			}
 				break;
 			case "RESB": {
 				int size = Integer.parseInt(token.operands[0]);
-				locctr += size;
+				incAmt += size;
 			}
 				break;
 
@@ -145,12 +135,25 @@ public class XEPass1 {
 			case "CSECT":
 
 				locctr = 0;
+				token.addr = 0;
 				section += 1;
 
 				// prepare one more symbol table.
 				out.symbolTables.add(new HashMap<String, XESymbol>());
 
 				break;
+			}
+			
+			/* New symbol found */
+			if (token.label.compareTo("") != 0
+					&& in.opTable.containsKey(token.label) == false) {
+
+				XESymbol sym = new XESymbol();
+				sym.name = token.label;
+				sym.addr = locctr;
+
+				//
+				out.symbolTables.get(section).put(token.label, sym);
 			}
 
 			/* Gathering Literals */
@@ -166,6 +169,8 @@ public class XEPass1 {
 					// " added. " + literalPool.size());
 				}
 			}
+			
+			locctr += incAmt;
 
 			out.tokens.add(token);
 			// System.out.println("[" + String.format("%04X", token.addr) +
