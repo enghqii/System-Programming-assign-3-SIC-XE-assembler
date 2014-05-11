@@ -1,8 +1,9 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.StringTokenizer;
 
 class Pass2Out {
-
+	public ArrayList<XEControlSection> secitons = new ArrayList<XEControlSection>();
 }
 
 public class XEPass2 {
@@ -16,6 +17,8 @@ public class XEPass2 {
 	
 	private static int section = 0;
 
+	private static XEControlSection curSection = null;
+
 	public XEPass2() {
 		
 	}
@@ -23,7 +26,7 @@ public class XEPass2 {
 	public static Pass2Out Pass2(Pass1Out _in){
 		
 		in = _in;
-		Pass2Out out = null;
+		Pass2Out out = new Pass2Out();
 		
 		registers = new HashMap<String, Integer>();
 		registers.put("A", 0); registers.put("X", 1); registers.put("L", 2);
@@ -34,9 +37,14 @@ public class XEPass2 {
 		extref = new ArrayList<String>();
 
 		section = 0;
+		
+		curSection = null;
+		String txtRecord = "";
+		
+		for( int idx = 0; idx < in.tokens.size(); idx++ ){
+			XEToken token = in.tokens.get(idx);
 
-		for (XEToken token : in.tokens) {
-
+			// print
 			{
 				String operands = "";
 
@@ -45,35 +53,122 @@ public class XEPass2 {
 						operands += (token.operands[i] + " ");
 				}
 
-				System.out.print("[" + String.format("%04X", token.addr) + "]\t"+token.label + "\t" + token.operator + "\t" + operands);
+				System.out.print("[" + String.format("%04X", token.addr)
+						+ "]\t" + token.label + "\t" + token.operator + "\t"
+						+ operands);
 			}
 			
 			// 1. 格利内靛 积己凳?
-			int objCode = generateObjectCode(token);
+			String objCode = generateObjectCode(token);
 
-			if (objCode != -1) {
+			if (objCode != null) {
 				// generated
+
+				System.out.print(""+String.format("\t%s",objCode));
 				
-				System.out.println(""+String.format("\t%X",objCode));
+				if(txtRecord.length() + objCode.length() <= 0x1D * 2){
+					txtRecord += objCode;
+				}else{
+					curSection.textRecord.add(txtRecord);
+					txtRecord = objCode;
+				}
 			}
 
 			// 2. 叼泛萍宏甸 贸府
 			switch (token.operator) {
+			case "START" :
+				curSection = new XEControlSection();
+				curSection.name 	= token.label;
+				curSection.startAddr = Integer.parseInt(token.operands[0]);
+
+				break;
+
 			case "EXTDEF":
-				extdef.add(token.operands[0]);
+
+				for (int i = 0; i < token.operands.length; i++) {
+
+					if (token.operands[i].compareTo("") != 0) {
+						extdef.add(token.operands[i]);
+
+						int addr = in.symbolTables.get(section).get(token.operands[i]).addr;
+						curSection.externalDefinition += String.format("%-6s",token.operands[i]);
+						curSection.externalDefinition += String.format("%06X", addr);
+					}
+				}
+
 				break;
+
 			case "EXTREF":
-				extref.add(token.operands[0]);
+				for (int i = 0; i < token.operands.length; i++) {
+
+					if (token.operands[i].compareTo("") != 0) {
+						extref.add(token.operands[i]);
+						curSection.externalReference += String.format("%-6s",token.operands[i]);
+					}
+				}
+				
 				break;
+				
 			case "CSECT":
+
+				// ends up current section
+				if(txtRecord != null){
+					curSection.textRecord.add(txtRecord);
+					txtRecord = "";
+				}
+				
+				curSection.sectionSize = in.tokens.get(idx-1).addr + in.tokens.get(idx-1).size;
+				curSection.hRecord += String.format("%-6s%06X%06X",
+						curSection.name, curSection.startAddr,
+						curSection.sectionSize);
+
+				out.secitons.add(curSection);
+
+				// create new section
+				curSection 			= new XEControlSection();
+				curSection.name 	= token.label;
+				curSection.startAddr = token.addr;
+
 				section++;
 				break;
+				
 			case "RESB":
+				
+				// force line feed another text record
+				curSection.textRecord.add(txtRecord);
+				txtRecord = "";
+				
 				break;
+				
 			case "RESW":
+				
+				// force line feed another text record
+				curSection.textRecord.add(txtRecord);
+				txtRecord = "";
+				
 				break;
+				
 			case "EQU":
+				
 				break;
+			}
+			
+			// 3. END
+			if(idx ==  in.tokens.size() - 1 ){
+				// ends up current section
+				if (txtRecord != null) {
+					curSection.textRecord.add(txtRecord);
+					txtRecord = "";
+				}
+				
+				XEToken tkn = in.tokens.get(idx);
+
+				curSection.sectionSize = tkn.addr + tkn.size;
+				curSection.hRecord += String.format("%-6s%06X%06X",
+						curSection.name, curSection.startAddr,
+						curSection.sectionSize);
+
+				out.secitons.add(curSection);
 			}
 
 			System.out.println("");
@@ -86,7 +181,7 @@ public class XEPass2 {
 		return out;
 	}
 
-	private static int generateObjectCode(XEToken token) {
+	private static String generateObjectCode(XEToken token) {
 
 		/* LITERAL? */{
 
@@ -94,7 +189,9 @@ public class XEPass2 {
 				XELiteral literal = new XELiteral(token.operands[0]);
 
 				int objCode = literal.getValue();
-				return objCode;
+				
+				String fmt = "%0"+literal.getSize()*2+"X";
+				return String.format(fmt, objCode);
 			}
 
 		}
@@ -190,6 +287,13 @@ public class XEPass2 {
 
 						// external Symbol
 
+						XEModification modif = new XEModification();
+						modif.addr = token.addr + 1;
+						modif.offset = 5;
+						modif.operation = "+"+token.operands[0];
+						
+						curSection.modifications.add(modif);
+
 						disp = 0;
 
 					} else if (token.operands[0].charAt(0) == '=') {
@@ -206,8 +310,9 @@ public class XEPass2 {
 					objCode |= (0x00FFF & disp);
 				else if (type == 4)
 					objCode |= (0xFFFFF & disp);
-
-				return objCode;
+				
+				String fmt = "%0" + type * 2 + "X";
+				return String.format(fmt, objCode);
 
 			} else if (type == 2 || type == 1) {
 
@@ -231,7 +336,8 @@ public class XEPass2 {
 
 				}
 
-				return objCode;
+				String fmt = "%0" + type * 2 + "X";
+				return String.format(fmt, objCode);
 			}
 		}
 
@@ -244,18 +350,50 @@ public class XEPass2 {
 					if (token.operands[0].charAt(i) == '+'
 							|| token.operands[0].charAt(i) == '-') {
 						// expression
-						return 0;
+						
+						StringTokenizer stk = new StringTokenizer(token.operands[0], "+-");
+						
+						int accSize = -1;
+						while(stk.hasMoreTokens()){
+							String str = stk.nextToken();
+
+							XEModification modif = new XEModification();
+							modif.addr = token.addr + 1;
+							modif.offset = 6;
+							char c = accSize<=0?'+':token.operands[0].charAt(accSize - 1);
+							modif.operation = c+str;
+							accSize = str.length() + 1;
+							
+							curSection.modifications.add(modif);
+						}
+						
+						
+						if ("WORD".compareTo(token.operator) == 0){
+							return "000000";
+						}else if ("BYTE".compareTo(token.operator) == 0) {
+							return "00";
+						}
+						
+						break;
 					}
 				}
 
 				int objCode = parseConst(token.operands[0]);
-				return objCode;
+				
+				String fmt = null;
+				
+				if ("WORD".compareTo(token.operator) == 0){
+					fmt = "%06X";
+				}else if ("BYTE".compareTo(token.operator) == 0) {
+					fmt = "%02X";
+				}
 
+				return String.format(fmt, objCode);
 			}
 
 		}
 
-		return -1;
+		return null;
 	}
 
 	private static int parseConst(String str) {

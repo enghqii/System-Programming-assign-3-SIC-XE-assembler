@@ -115,6 +115,7 @@ public class XEPass1 {
 
 					XELiteral literal = literalPool.get(val);
 					XEToken ltrToken = new XEToken();
+					ltrToken.size = literal.getSize();
 
 					ltrToken.addr = locctr;
 					ltrToken.label = "*";
@@ -170,6 +171,7 @@ public class XEPass1 {
 				}
 			}
 			
+			token.size = incAmt;
 			locctr += incAmt;
 
 			out.tokens.add(token);

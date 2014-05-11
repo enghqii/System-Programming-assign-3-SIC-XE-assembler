@@ -23,15 +23,12 @@ public class XEAssembler implements XEToyAssemler1 {
 
 	@Override
 	public void initialize() {
-		// TODO initialize에서는 어셈블 하기 전에 수행해야하는 파일 입출력 및 클래스 생성 등을 수행
 		
 		initInstructionFile("inst.txt");
 	}
 
 	@Override
 	public void parseData(File input) {
-		
-		// TODO parseData는 input 파일에 저장된 명령 라인을 object 코드로 전환하는 과정 수행 // 패스1, 패스2 실행해야함.
 		
 		// 0. READ LINES
 		p1In = new Pass1In();
@@ -56,21 +53,6 @@ public class XEAssembler implements XEToyAssemler1 {
 		
 		// 1. DO PASS1
 		p1Out = XEPass1.Pass1(p1In);
-		
-		// 1.1 print them out
-		for(XEToken token : p1Out.tokens){
-			
-			String operands = "";
-			
-			for(int i=0;i<token.operands.length;i++){
-				if(token.operands[i].compareTo("") != 0)
-					operands += (token.operands[i] + " ");
-			}
-			
-			System.out.println("[" + String.format("%04X", token.addr) + "]\t"+token.label + "\t" + token.operator + "\t" + operands);
-		}
-		
-		System.out.println("======================================================");
 		
 		// 2. DO PASS2
 		p2Out = XEPass2.Pass2(p1Out);

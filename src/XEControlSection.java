@@ -4,21 +4,21 @@ import java.util.ArrayList;
 public class XEControlSection {
 	
 	// H
-	private String 	name 		= "";
-	private int 	startAddr 	= 0;
-	private int 	sectionSize = 0;
+	public String 	name 		= "";
+	public int 	startAddr 	= 0;
+	public int 	sectionSize = 0;
 	
-	private String 	hRecord = "H"; 				// append here
+	public String 	hRecord = "H"; 				// append here
 	
 	// R,D
-	private String 	externalReference 	= "R"; 	// append here
-	private String 	externalDefinition 	= "D"; 	// append here
+	public String 	externalReference 	= "R"; 	// append here
+	public String 	externalDefinition 	= "D"; 	// append here
 	
 	// T
-	private ArrayList<String> 			textRecord = null;
+	public ArrayList<String> 			textRecord = null;
 	
 	// M
-	private ArrayList<XEModification> 	modifications = null;
+	public ArrayList<XEModification> 	modifications = null;
 	
 
 	public XEControlSection() {

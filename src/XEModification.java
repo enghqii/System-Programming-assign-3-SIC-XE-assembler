@@ -11,7 +11,7 @@ public class XEModification {
 	
 	public String getModificationRecord(){
 		
-		String str = "";
+		String str = "M";
 		str += String.format("%06X",addr);
 		str += String.format("%02X",offset);
 		str += operation;

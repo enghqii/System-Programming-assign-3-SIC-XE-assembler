@@ -6,6 +6,8 @@ public class XEToken {
 	public String	operator 	= "";
 	public String[]	operands 	= {"","",""};
 	
+	public int size = 0;
+	
 	// No comment
 	
 	public XEToken() {
