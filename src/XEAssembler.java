@@ -62,8 +62,6 @@ public class XEAssembler implements XEToyAssemler1 {
 
 	@Override
 	public void printOPCODE() {
-		// TODO printOPCODE는 콘솔창 출력 및 출력 파일 생성 등의 작업을 수행하시면 됩니다.
-		// with Pass2Out
 
 		try {
 			BufferedWriter out = new BufferedWriter(

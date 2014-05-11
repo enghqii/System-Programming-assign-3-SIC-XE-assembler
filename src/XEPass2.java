@@ -108,8 +108,16 @@ public class XEPass2 {
 					txtRecord = "";
 				}
 				startAddr = 0;
-				
-				curSection.sectionSize = in.tokens.get(idx-1).addr + in.tokens.get(idx-1).size;
+
+				// getlasttoken
+				XEToken lastToken = null;
+				int lstidx = idx - 1;
+				do {
+					lastToken = in.tokens.get(lstidx - 1);
+					lstidx--;
+				} while (lastToken.operator.compareTo("EQU") == 0);
+
+				curSection.sectionSize = lastToken.addr + lastToken.size;
 				curSection.hRecord += String.format("%-6s%06X%06X",
 						curSection.name, curSection.startAddr,
 						curSection.sectionSize);
@@ -403,7 +411,7 @@ public class XEPass2 {
 							XEModification modif = new XEModification();
 							modif.addr = token.addr + 1;
 							modif.offset = 6;
-							char c = accSize<=0?'+':token.operands[0].charAt(accSize - 1);
+							char c = accSize<=0?'+':token.operands[0].charAt(accSize);
 							modif.operation = c+str;
 							accSize += str.length() + 1;
 							
