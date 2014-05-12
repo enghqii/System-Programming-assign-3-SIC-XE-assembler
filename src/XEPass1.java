@@ -44,6 +44,7 @@ public class XEPass1 {
 
 	}
 
+	// pass  1
 	public static Pass1Out Pass1(Pass1In in) {
 
 		Pass1Out out = new Pass1Out();
@@ -63,13 +64,7 @@ public class XEPass1 {
 				continue;
 			}
 
-			token.addr = locctr;
-
-			// // locctr 판단 (명령어 타입 => operator 보면 됨, 할당 디렉티브, LTORG) ////
-			// // addr 설정 ////
-			// // 심볼테이블 만들기 ////
-
-			
+			token.addr = locctr;			
 
 			/* OPERATOR */
 			{
@@ -166,8 +161,6 @@ public class XEPass1 {
 					ltr.section = section;
 					addLiteral(ltr);
 
-					// System.out.println("[literal] " + ltr.getLtrStr() +
-					// " added. " + literalPool.size());
 				}
 			}
 			
@@ -175,8 +168,6 @@ public class XEPass1 {
 			locctr += incAmt;
 
 			out.tokens.add(token);
-			// System.out.println("[" + String.format("%04X", token.addr) +
-			// "] "+token.label + " " + token.operator + " ");
 		}
 
 		literalPool = null;
@@ -184,6 +175,7 @@ public class XEPass1 {
 		return out;
 	}
 
+	// 파일로 부터 읽어들인 라인 하나를 토큰으로 쪼개는 함수
 	private static XEToken ParseLine(String line) {
 
 		if (line.charAt(0) != '.') {

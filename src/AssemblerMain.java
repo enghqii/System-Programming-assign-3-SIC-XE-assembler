@@ -3,9 +3,6 @@ import java.io.File;
 
 public class AssemblerMain {
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		
 		XEAssembler assembler = new XEAssembler();

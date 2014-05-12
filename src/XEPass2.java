@@ -23,6 +23,7 @@ public class XEPass2 {
 		
 	}
 
+	// pass 2
 	public static Pass2Out Pass2(Pass1Out _in){
 		
 		in = _in;
@@ -47,7 +48,7 @@ public class XEPass2 {
 			XEToken token = in.tokens.get(idx);
 
 
-			// 1. 목적코드 생성됨?
+			// 1. 목적코드 생성
 			String objCode = generateObjectCode(token);
 
 			if (objCode != null) {
@@ -187,6 +188,7 @@ public class XEPass2 {
 
 			// 3. END
 			if(idx ==  in.tokens.size() - 1 ){
+				
 				// ends up current section
 				if(txtRecord != null || txtRecord.compareTo("") != 0){
 					txtRecord = String.format("T%06X%02X%s", startAddr, txtRecord.length()/2, txtRecord);
@@ -203,6 +205,7 @@ public class XEPass2 {
 						curSection.sectionSize);
 
 				out.secitons.add(curSection);
+				
 			}
 			
 			
@@ -232,6 +235,7 @@ public class XEPass2 {
 		return out;
 	}
 
+	// 현재 토큰에 대한 목적코드 생성, 없으면 null
 	private static String generateObjectCode(XEToken token) {
 
 		/* LITERAL? */{
@@ -447,6 +451,7 @@ public class XEPass2 {
 		return null;
 	}
 
+	// 문자열로 된 상수값을 해석해서 int로 변환
 	private static int parseConst(String str) {
 
 		switch (str.charAt(0)) {
